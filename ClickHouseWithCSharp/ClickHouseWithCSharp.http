@@ -1,0 +1,6 @@
+@ClickHouseWithCSharp_HostAddress = http://localhost:5004
+
+GET {{ClickHouseWithCSharp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
