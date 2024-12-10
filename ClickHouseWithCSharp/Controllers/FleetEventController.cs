@@ -31,12 +31,14 @@ namespace ClickHouseWithCSharp.Controllers
         {
             List<int> fleetIds = new List<int>
             {
-                14,18,19,15,8,16
+                6161
             };
 
-            var startDate = DateTime.Now.AddDays(-2);
-            var endDate = DateTime.Now.AddDays(-1);
-            var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate, FleetEventType.Delivery);
+            var startDate = new DateTime(2024, 12, 10, 08, 00, 00);
+            var endDate = new DateTime(2024, 12, 10, 14, 00, 00);
+
+            var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate);
+            
             return Ok(fleetMetricsCount);
         }
 
@@ -105,7 +107,7 @@ namespace ClickHouseWithCSharp.Controllers
 
             for (var i = 1; i <= 1000; i++)
             {
-                DateTime date = DateTime.Now.AddDays(-Random.Shared.Next(0, 3));
+                DateTime date = DateTime.Now.AddDays(-Random.Shared.Next(0, 3)).AddHours(-Random.Shared.Next(0, 8));
                 fleetEvent.Add(new FleetEvent
                 {
                     CourierRequestType = (CourierRequestTypes)enumValues[Random.Shared.Next(0, enumValues.Count)],
@@ -160,7 +162,7 @@ namespace ClickHouseWithCSharp.Controllers
 
             for (var i = 1; i <= 100; i++)
             {
-                DateTime date = DateTime.Now;//DateTime.Now.AddDays(-Random.Shared.Next(0, 6));
+                DateTime date = DateTime.Now.AddHours(-Random.Shared.Next(0, 8));
                 fleetEvent.Add(new FleetEvent
                 {
                     CourierRequestType = (CourierRequestTypes)enumValues[Random.Shared.Next(0, enumValues.Count)],
