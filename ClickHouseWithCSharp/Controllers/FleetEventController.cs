@@ -3,6 +3,7 @@ using ClickHouseWithCSharp.Infrastructure;
 using CS.Report.Grains.Data.Domains;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace ClickHouseWithCSharp.Controllers
 {
@@ -35,7 +36,7 @@ namespace ClickHouseWithCSharp.Controllers
 
             var startDate = DateTime.Now.AddDays(-2);
             var endDate = DateTime.Now.AddDays(-1);
-            var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate);
+            var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate, FleetEventType.Delivery);
             return Ok(fleetMetricsCount);
         }
 
@@ -48,20 +49,33 @@ namespace ClickHouseWithCSharp.Controllers
                 days.Add(from.AddDays(i).ToString("yyyyMMdd"));
             }
 
-            var fleetEvents = await clickHouseDbContext.FleetEvents
-                .Where(x =>
+            Expression<Func<FleetEvent, bool>> predicate = x =>
                             fleetIds.Contains(x.FleetId) &&
                             days.Contains(x.PartitionDate) &&
-                            x.CreateDate >= from && x.CreateDate <= to &&
-                            (fleetEventType == null ? true : x.FleetEventType == fleetEventType))
+                            x.CreateDate >= from && x.CreateDate <= to;
+
+            if (fleetEventType != null)
+            {
+                // Create the new condition expression
+                var parameter = predicate.Parameters[0]; // Reuse the parameter from the existing predicate
+                var fleetEventTypeCondition = Expression.Equal(
+                    Expression.PropertyOrField(parameter, nameof(FleetEvent.FleetEventType)),
+                    Expression.Constant(fleetEventType)
+                );
+
+                // Combine the existing predicate with the new condition
+                var combinedBody = Expression.AndAlso(predicate.Body, fleetEventTypeCondition);
+
+                // Create a new lambda with the combined body and original parameters
+                predicate = Expression.Lambda<Func<FleetEvent, bool>>(combinedBody, parameter);
+            }
+
+            var fleetEvents = await clickHouseDbContext.FleetEvents
+                .Where(predicate)
                 .ToListAsync();
 
             var fleetEventsQuery = clickHouseDbContext.FleetEvents
-                .Where(x =>
-                            fleetIds.Contains(x.FleetId) &&
-                            days.Contains(x.PartitionDate) &&
-                            x.CreateDate >= from && x.CreateDate <= to &&
-                            (fleetEventType == null ? true : x.FleetEventType == fleetEventType)).ToQueryString();
+                .Where(predicate).ToQueryString();
 
             var fleetEventMetric = fleetEvents
                 .GroupBy(fleetGroup => fleetGroup.FleetId)
