@@ -39,7 +39,7 @@ namespace ClickHouseWithCSharp.Controllers
             return Ok(fleetMetricsCount);
         }
 
-        private async Task<IActionResult> GetFleetMetricsCount(IEnumerable<int> fleetIds, DateTime from, DateTime to, FleetEventType fleetEventType = FleetEventType.None)
+        private async Task<IActionResult> GetFleetMetricsCount(IEnumerable<int> fleetIds, DateTime from, DateTime to, FleetEventType? fleetEventType = null)
         {
             var days = new List<string>();
 
@@ -53,7 +53,7 @@ namespace ClickHouseWithCSharp.Controllers
                             fleetIds.Contains(x.FleetId) &&
                             days.Contains(x.PartitionDate) &&
                             x.CreateDate >= from && x.CreateDate <= to &&
-                            (x.FleetEventType == FleetEventType.None ? true : x.FleetEventType == fleetEventType))
+                            (fleetEventType == null ? true : x.FleetEventType == fleetEventType))
                 .ToListAsync();
 
             var fleetEventsQuery = clickHouseDbContext.FleetEvents
@@ -61,7 +61,7 @@ namespace ClickHouseWithCSharp.Controllers
                             fleetIds.Contains(x.FleetId) &&
                             days.Contains(x.PartitionDate) &&
                             x.CreateDate >= from && x.CreateDate <= to &&
-                            (x.FleetEventType == FleetEventType.None ? true : x.FleetEventType == fleetEventType)).ToQueryString();
+                            (fleetEventType == null ? true : x.FleetEventType == fleetEventType)).ToQueryString();
 
             var fleetEventMetric = fleetEvents
                 .GroupBy(fleetGroup => fleetGroup.FleetId)
@@ -106,6 +106,61 @@ namespace ClickHouseWithCSharp.Controllers
                     ExceptionDescription = string.Empty,
                     FleetEventType = (FleetEventType)Random.Shared.Next(1, 4),
                     FleetId = (byte)Random.Shared.Next(1, 20),
+                    Id = Guid.NewGuid(),
+                    IsComputable = Random.Shared.Next(0, 2) == 0 ? false : true,
+                    IsDeliveredOnTimeByDriver = Random.Shared.Next(0, 2) == 0 ? false : true,
+                    IsOperationStaff = Random.Shared.Next(0, 2) == 0 ? false : true,
+                    IsReassignmentRequested = Random.Shared.Next(0, 2) == 0 ? false : true,
+                    LocationLatitude = Random.Shared.Next(30, 40),
+                    LocationLongitude = Random.Shared.Next(50, 60),
+                    OnTimeActivity = Random.Shared.Next(100, 1000),
+                    ParcelReferenceCode = Random.Shared.Next(100000000, 999999999),
+                    PartitionDate = date.ToString("yyyyMMdd"),
+                    RealDeliveryDateTime = date,
+                    ReturnParcelReferenceCode = 0,
+                    ShiftId = Random.Shared.Next(100, 1000),
+                    ShipmentId = Random.Shared.Next(100, 1000),
+                    ShipmentNumber = Random.Shared.Next(100, 1000),
+                    StoreId = Random.Shared.Next(100, 1000),
+                    UnsuccessfulOperationReasonId = 0,
+                    VendorId = Random.Shared.Next(1, 9) * 5,
+                    ZapDispatchRequestId = Random.Shared.Next(100, 1000)
+                });
+            }
+
+            await clickHouseDbContext.FleetEvents.AddRangeAsync(fleetEvent);
+            await clickHouseDbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
+        [HttpGet("RandomDataInsertFleetId6161")]
+        public async Task<IActionResult> RandomDataInsertFleetId6161()
+        {
+            IList<FleetEvent> fleetEvent = new List<FleetEvent>();
+
+            List<byte> enumValues = Enum.GetValues(typeof(CourierRequestTypes))
+                                        .Cast<byte>()
+                                        .ToList();
+
+            for (var i = 1; i <= 100; i++)
+            {
+                DateTime date = DateTime.Now;//DateTime.Now.AddDays(-Random.Shared.Next(0, 6));
+                fleetEvent.Add(new FleetEvent
+                {
+                    CourierRequestType = (CourierRequestTypes)enumValues[Random.Shared.Next(0, enumValues.Count)],
+                    CreateDate = date,
+                    DelayActivity = Random.Shared.Next(0, 30),
+                    DeliveryCode = Random.Shared.Next(100000, 999999),
+                    DeliveryServiceProviderId = (byte)Random.Shared.Next(0, 5),
+                    DispatchRequestId = (long)Random.Shared.Next(10000000, 99999999),
+                    DistanceMeter = Random.Shared.Next(1000, 5000),
+                    DriverId = Random.Shared.Next(10, 1000),
+                    EstimatedDeliveryDateTime = date,
+                    ExceptionDescription = string.Empty,
+                    FleetEventType = (FleetEventType)Random.Shared.Next(1, 4),
+                    FleetId = 6161,
                     Id = Guid.NewGuid(),
                     IsComputable = Random.Shared.Next(0, 2) == 0 ? false : true,
                     IsDeliveredOnTimeByDriver = Random.Shared.Next(0, 2) == 0 ? false : true,

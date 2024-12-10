@@ -4,7 +4,6 @@ namespace ClickHouseWithCSharp.Infrastructure;
 
 public enum FleetEventType : byte
 {
-    None = 0,
     Delivery = 1,
     UnsuccessfulDelivery = 2,
     UnsuccessfulPickup = 3,
