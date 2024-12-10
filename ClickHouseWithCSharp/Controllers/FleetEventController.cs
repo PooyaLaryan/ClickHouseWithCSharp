@@ -33,8 +33,8 @@ namespace ClickHouseWithCSharp.Controllers
                 14,18,19,15,8,16
             };
 
-            var startDate = DateTime.Now.AddDays(-1);
-            var endDate = DateTime.Now;
+            var startDate = DateTime.Now.AddDays(-2);
+            var endDate = DateTime.Now.AddDays(-1);
             var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate, FleetEventType.None);
             return Ok(fleetMetricsCount);
         }
@@ -53,8 +53,15 @@ namespace ClickHouseWithCSharp.Controllers
                             fleetIds.Contains(x.FleetId) &&
                             days.Contains(x.PartitionDate) &&
                             x.CreateDate >= from && x.CreateDate <= to &&
-                            (x.FleetEventType != FleetEventType.None ? true : x.FleetEventType == fleetEventType))
+                            (x.FleetEventType == FleetEventType.None ? true : x.FleetEventType == fleetEventType))
                 .ToListAsync();
+
+            var fleetEventsQuery = clickHouseDbContext.FleetEvents
+                .Where(x =>
+                            fleetIds.Contains(x.FleetId) &&
+                            days.Contains(x.PartitionDate) &&
+                            x.CreateDate >= from && x.CreateDate <= to &&
+                            (x.FleetEventType == FleetEventType.None ? true : x.FleetEventType == fleetEventType)).ToQueryString();
 
             var fleetEventMetric = fleetEvents
                 .GroupBy(fleetGroup => fleetGroup.FleetId)
