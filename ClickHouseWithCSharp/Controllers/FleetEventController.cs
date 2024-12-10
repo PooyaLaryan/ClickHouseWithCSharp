@@ -35,11 +35,11 @@ namespace ClickHouseWithCSharp.Controllers
 
             var startDate = DateTime.Now.AddDays(-2);
             var endDate = DateTime.Now.AddDays(-1);
-            var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate, FleetEventType.None);
+            var fleetMetricsCount = await GetFleetMetricsCount(fleetIds, startDate, endDate);
             return Ok(fleetMetricsCount);
         }
 
-        private async Task<IActionResult> GetFleetMetricsCount(IEnumerable<int> fleetIds, DateTime from, DateTime to, FleetEventType fleetEventType)
+        private async Task<IActionResult> GetFleetMetricsCount(IEnumerable<int> fleetIds, DateTime from, DateTime to, FleetEventType fleetEventType = FleetEventType.None)
         {
             var days = new List<string>();
 
